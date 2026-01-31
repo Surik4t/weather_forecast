@@ -9,5 +9,8 @@ async def current_forecast(coords: Coords):
     try:
         data = await get_current_weather(coords.latitude, coords.longitude)
         return data
+    
     except Exception as e:
         raise e
+    
+
