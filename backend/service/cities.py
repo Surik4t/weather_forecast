@@ -4,7 +4,7 @@ from sqlmodel import select
 from backend.database.config import SessionDep
 from backend.database.models import City
 from backend.database.models import Coords
-from backend.open_meteo_api import get_current_weather
+from backend.service.open_meteo_api import get_current_weather
 
 cities_router = APIRouter(prefix="/cities")
 

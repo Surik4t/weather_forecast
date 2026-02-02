@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from backend.forecast import forecast_router
-from backend.cities import cities_router
+from backend.service.forecast import forecast_router
+from backend.service.cities import cities_router
 from backend.database.init import init_db
 
 from backend.database.config import create_db_and_tables
