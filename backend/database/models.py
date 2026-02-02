@@ -12,13 +12,18 @@ class City(Coords, table=True):
 
 
 # Users 
-class User(SQLModel, table=True):
+class User(SQLModel):
     id: int | None = Field(default=None, primary_key=True) 
     username: str = Field(index=True, unique=True)
     disabled: bool | None = None
 
 
-class UserInDB(User):
+class NewUser(SQLModel):
+    username: str
+    password: str
+
+
+class UserInDB(User, table=True):
     hashed_password: str
 
 

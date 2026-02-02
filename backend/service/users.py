@@ -3,8 +3,9 @@ from datetime import timedelta, datetime, timezone
 
 from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 
-from backend.database.models import User, UserInDB, Token, TokenData
+from backend.database.models import User, NewUser, UserInDB, Token, TokenData
 from backend.database.config import SessionDep
 from sqlmodel import select
 
@@ -38,20 +39,18 @@ async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"token": token}
 
 
-def get_user(username: str, session: SessionDep):
+def get_user(username: str, session: SessionDep) -> UserInDB:
     try:
-        query = select(User).where(User.username == username)
-        username_exists = session.exec(query).first()
-        if username_exists:
-            user = UserInDB(username_exists)
-            return user
+        query = select(UserInDB).where(UserInDB.username == username)
+        user = session.exec(query).first()
+        return user
     except Exception as e:
         raise e
 
 
 
 def authenticate_user(username: str, password: str, session: SessionDep):
-    user: UserInDB = get_user(username, session)
+    user = get_user(username, session)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -70,7 +69,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_current_user(
+    session: SessionDep,
+    token: Annotated[str, Depends(oauth2_scheme)]
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -84,7 +86,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user(username=token_data.username)
+    user = get_user(username=token_data.username, session=session)
     if user is None:
         raise credentials_exception
     return user
@@ -122,3 +124,27 @@ async def read_users_me(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     return current_user
+
+
+@users_router.put("/register")
+async def register_user(new_user: NewUser, session: SessionDep):
+    username_taken = get_user(new_user.username, session)
+    print(username_taken)
+    if username_taken:
+        raise HTTPException(status_code=409, detail="Username already taken.")
+    user_to_create = UserInDB(
+        username=new_user.username,
+        disabled=False,
+        hashed_password=get_password_hash(new_user.password),
+    )
+    try:
+        session.add(user_to_create)
+        session.commit()
+        return JSONResponse(content={"data": "User created."}, status_code=200)
+    except Exception as e:
+        raise e
+
+
+@users_router.get("/all")
+async def get_users(session: SessionDep):
+    return session.exec(select(UserInDB)).all()
