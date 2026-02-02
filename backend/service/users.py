@@ -34,11 +34,6 @@ def get_password_hash(password):
     return password_hash.hash(password)
 
 
-@users_router.get("/")
-async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
-
-
 def get_user(username: str, session: SessionDep) -> UserInDB:
     try:
         query = select(UserInDB).where(UserInDB.username == username)
