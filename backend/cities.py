@@ -19,3 +19,14 @@ async def get_cities_list(session: SessionDep) -> list[City]:
     except Exception as e:
         raise e
 
+
+@cities_router.post("/{city_name}")
+async def forecast_for_city(city_name, session: SessionDep):
+    try:        
+        statement = select(City).where(City.name == city_name.title())
+        city = session.exec(statement).first()
+        forecast = await get_current_weather(city.latitude, city.longitude)
+        return forecast
+    except Exception as e:
+        raise e
+    
