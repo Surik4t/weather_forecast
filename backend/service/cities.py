@@ -11,8 +11,8 @@ cities_router = APIRouter(prefix="/cities")
 @cities_router.get("/all")
 async def get_cities_list(session: SessionDep) -> list[City]:
     try:
-        statement = select(City)
-        result = session.exec(statement)
+        query = select(City)
+        result = session.exec(query)
         cities = result.all()
         return cities
     
@@ -23,8 +23,8 @@ async def get_cities_list(session: SessionDep) -> list[City]:
 @cities_router.post("/{city_name}")
 async def forecast_for_city(city_name, session: SessionDep):
     try:        
-        statement = select(City).where(City.name == city_name.title())
-        city = session.exec(statement).first()
+        query = select(City).where(City.name == city_name.title())
+        city = session.exec(query).first()
         forecast = await get_current_weather(city.latitude, city.longitude)
         return forecast
     except Exception as e:

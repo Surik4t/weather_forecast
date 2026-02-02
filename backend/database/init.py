@@ -20,8 +20,8 @@ def init_db():
                 latitude = float(line["latitude"])
                 longitude = float(line["longitude"])
 
-                statement = select(City).where(City.name == name)
-                city_in_database = session.exec(statement).first()
+                query = select(City).where(City.name == name)
+                city_in_database = session.exec(query).first()
 
                 if not city_in_database:
                     session.add(
