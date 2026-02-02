@@ -5,6 +5,8 @@ from fastapi import Depends, APIRouter, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from backend.database.models import User, UserInDB, Token, TokenData
+from backend.database.config import SessionDep
+from sqlmodel import select
 
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -31,38 +33,25 @@ def get_password_hash(password):
     return password_hash.hash(password)
 
 
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
-
-
 @users_router.get("/")
 async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"token": token}
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def get_user(username: str, session: SessionDep):
+    try:
+        query = select(User).where(User.username == username)
+        username_exists = session.exec(query).first()
+        if username_exists:
+            user = UserInDB(username_exists)
+            return user
+    except Exception as e:
+        raise e
 
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+
+def authenticate_user(username: str, password: str, session: SessionDep):
+    user: UserInDB = get_user(username, session)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -95,7 +84,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = get_user(username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -111,9 +100,10 @@ async def get_current_active_user(
 
 @users_router.post("/token")
 async def login_for_access_token(
+    session: SessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ) -> Token:
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password, session)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
