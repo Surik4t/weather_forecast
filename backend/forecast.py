@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.models.models import Coords
+from backend.database.models import Coords
 from backend.open_meteo_api import get_current_weather
 
 forecast_router = APIRouter(prefix="/forecast")

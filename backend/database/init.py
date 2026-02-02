@@ -2,7 +2,7 @@ import csv
 
 from sqlmodel import select
 
-from backend.database.schemas import City
+from backend.database.models import City
 from backend.database.config import get_session 
 
 
