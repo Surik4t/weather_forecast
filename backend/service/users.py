@@ -14,7 +14,7 @@ from jwt.exceptions import InvalidTokenError
 from pwdlib import PasswordHash
 
 
-users_router = APIRouter(prefix="/users")
+users_router = APIRouter(prefix="/users", tags=["users"])
 
 
 SECRET_KEY = "9bbf6d44b5ed3f6b6a7856df43fb3852"

@@ -6,7 +6,7 @@ from backend.database.models import City
 from backend.database.models import Coords
 from backend.service.open_meteo_api import get_current_weather
 
-cities_router = APIRouter(prefix="/cities")
+cities_router = APIRouter(prefix="/cities", tags=["cities"])
 
 @cities_router.get("/all")
 async def get_cities_list(session: SessionDep) -> list[City]:
