@@ -7,7 +7,16 @@ async def get_current_weather(latitude: float, longitude: float) -> dict:
         response = requests.get(f"{BASE_URL}/v1/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,wind_speed_10m,surface_pressure")
         
         data = json.loads(response.text)
-        weather_data = {key: {"value": data["current"][key], "units": data["current_units"][key]} for key in data["current"].keys()}
+        
+        current = data["current"]
+        units = data["current_units"]
+
+        weather_data = {
+            "Time": f"{current["time"]} {data["timezone"]}",
+            "Temp": f"{current["temperature_2m"]}{units["temperature_2m"]}",
+            "Wind speed": f"{current["wind_speed_10m"]} {units["wind_speed_10m"]}",
+            "Pressure": f"{current["surface_pressure"]} {units["surface_pressure"]}",
+        }
         
         return weather_data
     
@@ -43,7 +52,7 @@ async def get_hourly_forecast(latitude: float, longitude: float) -> dict:
                 "Shower": f"{shower} {units["showers"]}",
                 "Snow": f"{snow} {units["snowfall"]}",
             })
-            
+
         return weather_data
     
     except Exception as e:
