@@ -6,9 +6,14 @@ class Coords(SQLModel):
     longitude: float = Field(default=0, le=180, ge=-180)
 
 
-class City(Coords, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class City(Coords):
     name: str = Field(index=True)
+
+
+class CityInDB(City, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    forecast: str | None
+    forecast_updated_time: str | None
 
 
 # Users 

@@ -15,4 +15,38 @@ async def get_current_weather(latitude: float, longitude: float) -> dict:
         raise e
     
 
+async def get_hourly_forecast(latitude: float, longitude: float) -> dict:
+    try:
+        response = requests.get(f"{BASE_URL}/v1/forecast?latitude={latitude}&longitude={longitude}&hourly=temperature_2m,rain,showers,snowfall,wind_speed_10m&forecast_days=1")
+        
+        data = json.loads(response.text)
+
+        print(data)
+
+        times = data["hourly"]["time"]
+        temperatures = data["hourly"]["temperature_2m"]
+        wind_speeds = data["hourly"]["wind_speed_10m"]
+        rains = data["hourly"]["rain"]
+        showers = data["hourly"]["showers"]
+        snows = data["hourly"]["snowfall"]
+
+        units = data["hourly_units"]
+        timezone = data["timezone"]
+
+        weather_data = list()
+        for time, temp, wind, rain, shower, snow in zip(times, temperatures, wind_speeds, rains, showers, snows):
+            weather_data.append({
+                "Time": f"{time} {timezone}",
+                "Temp": f"{temp}{units["temperature_2m"]}",
+                "Wind": f"{wind} {units["wind_speed_10m"]}",
+                "Rain": f"{rain} {units["rain"]}",
+                "Shower": f"{shower} {units["showers"]}",
+                "Snow": f"{snow} {units["snowfall"]}",
+            })
+            
+        return weather_data
+    
+    except Exception as e:
+        raise e
+
 #asyncio.run(get_current_weather())
