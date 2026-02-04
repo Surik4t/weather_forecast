@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from sqlmodel import select
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from backend.database.config import SessionDep
 from backend.database.models import City, CityInDB, Forecast, ForecastQuery
@@ -27,16 +27,19 @@ async def get_cities_list(session: SessionDep) -> list[CityInDB]:
 
 @cities_router.put("/")
 async def add_city(new_city: City, session: SessionDep):
-    city_to_create = CityInDB(
-        name=new_city.name.title(),
-        latitude=new_city.latitude,
-        longitude=new_city.longitude,
-        forecast=None,
-        forecast_updated_time=datetime(year=2000, month=1, day=1, hour=0, minute=0).isoformat()
-    )
-    session.add(city_to_create)
-    session.commit()
-    return
+    try:
+        city_to_create = CityInDB(
+            name=new_city.name.title(),
+            latitude=new_city.latitude,
+            longitude=new_city.longitude,
+            forecast_updated_time=None,
+        )
+        session.add(city_to_create)
+        session.commit()
+        return
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Internal server error.")
 
 
 @cities_router.post("/city_forecast")
@@ -46,8 +49,36 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
         db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
         city = session.exec(db_query).first()
         if city:
-            hourly_forecast = await update_hourly_forecast(city.latitude, city.longitude)
-            return hourly_forecast
+            if not city.forecast_updated_time or (
+                datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()
+            ): 
+                print("Updating forecast...")
+                delete_query = select(Forecast).where(Forecast.city_id == city.id)
+                old_forecasts = session.exec(delete_query).all()
+                for forecast in old_forecasts:
+                    session.delete(forecast)
+
+                hourly_forecasts = await update_hourly_forecast(city.latitude, city.longitude)
+                for forecast in hourly_forecasts:
+                    forecast_to_save = Forecast(
+                        city_id=city.id,
+                        city_name=city.name,
+                        time=forecast["Time"],
+                        temp=forecast["Temp"],
+                        wind=forecast["Wind"],
+                        rain=forecast["Rain"],
+                        shower=forecast["Shower"],
+                        snow=forecast["Snow"],
+                    )
+                    session.add(forecast_to_save)
+
+                city.forecast_updated_time = datetime.now().isoformat()
+                session.commit()
+
+                return hourly_forecasts
+            
+            return city.forecast_hourly
+
         raise HTTPException(status_code=404, detail="City not found.")
     
     except Exception as e:

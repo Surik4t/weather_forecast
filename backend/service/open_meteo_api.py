@@ -1,7 +1,8 @@
 import requests, json, asyncio
-from backend.database.models import Forecast
+
 
 BASE_URL = "https://api.open-meteo.com/"
+
 
 async def get_current_weather(latitude: float, longitude: float) -> dict:
     try:
@@ -25,7 +26,7 @@ async def get_current_weather(latitude: float, longitude: float) -> dict:
         raise e
     
 
-async def update_hourly_forecast(latitude: float, longitude: float) -> list[Forecast]:
+async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict]:
     try:
         response = requests.get(f"{BASE_URL}/v1/forecast?latitude={latitude}&longitude={longitude}&hourly=temperature_2m,rain,showers,snowfall,wind_speed_10m&forecast_days=1")
         

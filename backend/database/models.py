@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import List
+from typing import List, Optional
 
 # Cities
 class Coords(SQLModel):
@@ -13,7 +13,7 @@ class City(Coords):
 
 class CityInDB(City, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    forecast_hourly: List["Forecast"] = Relationship(back_populates="city")
+    forecast_hourly: Optional[List["Forecast"]] = Relationship(back_populates="city")
     forecast_updated_time: str | None
 
 
