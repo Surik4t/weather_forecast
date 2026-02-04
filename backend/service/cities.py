@@ -25,8 +25,11 @@ cities_router = APIRouter(prefix="/cities", tags=["cities"])
 async def get_cities_list(user_id: uuid.UUID, session: SessionDep):
     try:
         query = select(User).where(User.id == user_id)
-        cities = session.exec(query).first().cities
-        return cities
+        user = session.exec(query).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        
+        return user.cities
     
     except Exception as e:
         raise e
