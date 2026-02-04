@@ -68,7 +68,18 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
 
             city.forecast_updated_time = datetime.now().isoformat()
             session.commit()
-            return
+
+
+    def filter_by_params(forecast: ForecastResponse):
+        if not forecast_query.temp:
+            del(forecast.temp)
+        if not forecast_query.wind:
+            del(forecast.wind)
+        if not forecast_query.precipitation:
+            del(forecast.rain)
+            del(forecast.shower)
+            del(forecast.snow)
+
 
     try:        
         db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
@@ -80,7 +91,12 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
             ): 
                 await update_forecast(city)
 
-            forecast_for_ = city.forecast_hourly
+            requested_forecast = [fc for fc in city.forecast_hourly if datetime.fromisoformat(fc.time).hour == forecast_query.time_hours].pop()
+            forecast_response = ForecastResponse.model_validate(requested_forecast)
+            
+            filter_by_params(forecast_response)
+
+            return forecast_response
 
         raise HTTPException(status_code=404, detail="City not found.")
     

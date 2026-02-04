@@ -43,7 +43,7 @@ class Forecast(ForecastBase, table=True):
 
 class ForecastQuery(SQLModel):
     city_name: str
-    time_hours: int = Field(default=12, ge=0, le=24)
+    time_hours: int = Field(default=12, ge=0, le=23)
     temp: bool = Field(default=True)
     wind: bool = Field(default=True)
     precipitation: bool = Field(default=True)
