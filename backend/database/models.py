@@ -9,7 +9,8 @@ class Coords(SQLModel):
 
 
 class City(Coords):
-    name: str = Field(index=True, unique=True)
+    name: str = Field(default="City Name", index=True)
+    user_id: uuid.UUID = Field(default="User ID")
 
 
 class CityInDB(City, table=True):
@@ -31,7 +32,7 @@ class ForecastBase(SQLModel):
 
 
 class ForecastResponse(ForecastBase):
-    city_name: str 
+    city_name: str = Field(default="City Name")
     
     class Config:
         from_attributes = True
@@ -40,13 +41,13 @@ class ForecastResponse(ForecastBase):
 class Forecast(ForecastBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     city_id: int = Field(default=None, foreign_key="cityindb.id")
-    city_name: str 
+    city_name: str = Field(default="City Name")
 
     city: CityInDB = Relationship(back_populates="forecast_hourly")
 
 
 class ForecastQuery(SQLModel):
-    city_name: str
+    city_name: str = Field(default="City Name")
     time_hours: int = Field(default=12, ge=0, le=23)
     temp: bool = Field(default=True)
     humidity: bool = Field(default=True)
@@ -62,4 +63,3 @@ class User(SQLModel, table=True):
         index=True
     )
     username: str = Field(index=True, unique=True)
-    disabled: bool = Field(default=False)

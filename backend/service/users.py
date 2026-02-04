@@ -8,10 +8,10 @@ from sqlmodel import select
 users_router = APIRouter(prefix="/users", tags=["users"])
 
 
-@users_router.get("/user")
+@users_router.get("/all")
 async def get_list_of_users(session: SessionDep):
     try:
-        users_in_db = session.exec(select(User).where(User.disabled == False)).all()
+        users_in_db = session.exec(select(User)).all()
         users = [user.username for user in users_in_db]
         return users
     except Exception as e:
@@ -29,7 +29,7 @@ async def get_user_id(username, session: SessionDep):
     try:
         query = select(User).where(User.username == username)
         user_in_db = session.exec(query).first()
-        if not user_in_db or user_in_db.disabled == True:
+        if not user_in_db:
             create_user(username, session)
             user_in_db = session.exec(query).first()
         

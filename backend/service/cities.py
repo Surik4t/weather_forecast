@@ -1,11 +1,19 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, status
+import uuid
 
 from sqlmodel import select
 
 from datetime import datetime, timedelta
 
 from backend.database.config import SessionDep
-from backend.database.models import City, CityInDB, Forecast, ForecastQuery, ForecastResponse
+from backend.database.models import (
+    User,
+    City, 
+    CityInDB, 
+    Forecast, 
+    ForecastQuery, 
+    ForecastResponse,
+)
 
 from backend.service.open_meteo_api import get_current_weather, update_hourly_forecast
 
@@ -13,33 +21,45 @@ from backend.service.open_meteo_api import get_current_weather, update_hourly_fo
 cities_router = APIRouter(prefix="/cities", tags=["cities"])
 
 
-@cities_router.get("/all")
-async def get_cities_list(session: SessionDep) -> list[CityInDB]:
+@cities_router.get("/all/{user_id}")
+async def get_cities_list(user_id: uuid.UUID, session: SessionDep):
     try:
-        query = select(CityInDB)
-        result = session.exec(query)
-        cities = result.all()
+        query = select(CityInDB).where(CityInDB.user_id == user_id)
+        cities = session.exec(query).all()
         return cities
     
     except Exception as e:
         raise e
 
 
-@cities_router.put("/")
+@cities_router.put("/", status_code=201)
 async def add_city(new_city: City, session: SessionDep):
     try:
+        user = session.exec(select(User).where(User.id==new_city.user_id)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        
+        query = select(CityInDB).where((CityInDB.user_id == new_city.user_id) & (CityInDB.name == new_city.name))
+        city_exists = session.exec(query).first()
+        print(city_exists)
+        if city_exists:
+            raise HTTPException(status_code=409, detail=f"City with name '{new_city.name}' already exists.")
+
         city_to_create = CityInDB(
             name=new_city.name.title(),
+            user_id=new_city.user_id,
             latitude=new_city.latitude,
             longitude=new_city.longitude,
             forecast_updated_time=None,
         )
+
         session.add(city_to_create)
         session.commit()
-        return
+
+        return {"message": f"City '{city_to_create.name}' created."}
+    
     except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail="Internal server error.")
+        raise e
 
 
 @cities_router.post("/city_forecast")
