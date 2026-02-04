@@ -32,8 +32,6 @@ async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict
         
         data = json.loads(response.text)
 
-        print(data)
-
         times = data["hourly"]["time"]
         temperatures = data["hourly"]["temperature_2m"]
         wind_speeds = data["hourly"]["wind_speed_10m"]
@@ -59,5 +57,3 @@ async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict
     
     except Exception as e:
         raise e
-
-#asyncio.run(get_current_weather(0, 0))
