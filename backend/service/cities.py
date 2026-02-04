@@ -44,6 +44,31 @@ async def add_city(new_city: City, session: SessionDep):
 
 @cities_router.post("/city_forecast")
 async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
+    
+    async def update_forecast(city: CityInDB):
+            delete_query = select(Forecast).where(Forecast.city_id == city.id)
+            old_forecasts = session.exec(delete_query).all()
+            for forecast in old_forecasts:
+                session.delete(forecast)
+
+            hourly_forecasts = await update_hourly_forecast(city.latitude, city.longitude)
+            for forecast in hourly_forecasts:
+                forecast_to_save = Forecast(
+                    city_id=city.id,
+                    city_name=city.name,
+                    time=forecast["Time"],
+                    temp=forecast["Temp"],
+                    wind=forecast["Wind"],
+                    rain=forecast["Rain"],
+                    shower=forecast["Shower"],
+                    snow=forecast["Snow"],
+                )
+                session.add(forecast_to_save)
+
+            city.forecast_updated_time = datetime.now().isoformat()
+            session.commit()
+
+            return hourly_forecasts
 
     try:        
         db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
@@ -52,31 +77,7 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
             if not city.forecast_updated_time or (
                 datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()
             ): 
-                print("Updating forecast...")
-                delete_query = select(Forecast).where(Forecast.city_id == city.id)
-                old_forecasts = session.exec(delete_query).all()
-                for forecast in old_forecasts:
-                    session.delete(forecast)
-
-                hourly_forecasts = await update_hourly_forecast(city.latitude, city.longitude)
-                for forecast in hourly_forecasts:
-                    forecast_to_save = Forecast(
-                        city_id=city.id,
-                        city_name=city.name,
-                        time=forecast["Time"],
-                        temp=forecast["Temp"],
-                        wind=forecast["Wind"],
-                        rain=forecast["Rain"],
-                        shower=forecast["Shower"],
-                        snow=forecast["Snow"],
-                    )
-                    session.add(forecast_to_save)
-
-                city.forecast_updated_time = datetime.now().isoformat()
-                session.commit()
-
-                return hourly_forecasts
-            
+                return await update_forecast(city)
             return city.forecast_hourly
 
         raise HTTPException(status_code=404, detail="City not found.")
