@@ -53,18 +53,10 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
 
             hourly_forecasts = await update_hourly_forecast(city.latitude, city.longitude)
             for forecast in hourly_forecasts:
-                forecast_to_save = Forecast(
-                    city_id=city.id,
-                    city_name=city.name,
-                    time=forecast["Time"],
-                    timezone=forecast["Timezone"],
-                    temp=forecast["Temp"],
-                    humidity=forecast["Humidity"],
-                    wind=forecast["Wind"],
-                    rain=forecast["Rain"],
-                    shower=forecast["Shower"],
-                    snow=forecast["Snow"],
-                )
+                forecast_data = forecast.model_dump()
+                forecast_data["city_id"] = city.id
+                forecast_data["city_name"] = city.name
+                forecast_to_save = Forecast.model_validate(forecast_data)
                 session.add(forecast_to_save)
 
             city.forecast_updated_time = datetime.now().isoformat()
@@ -90,7 +82,7 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
         
         if city:
             if not city.forecast_updated_time or (
-                datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=1) < datetime.now()
+                datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()
             ): 
                 await update_forecast(city)
 

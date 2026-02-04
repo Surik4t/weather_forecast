@@ -1,4 +1,5 @@
 import requests, json, asyncio
+from backend.database.models import ForecastBase
 
 
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
@@ -27,7 +28,7 @@ async def get_current_weather(latitude: float, longitude: float) -> dict:
         raise e
     
 
-async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict]:
+async def update_hourly_forecast(latitude: float, longitude: float) -> list[ForecastBase]:
     try:
         params = "hourly=temperature_2m,relative_humidity_2m,rain,showers,snowfall,wind_speed_10m&timezone=auto&forecast_days=1"
         response = requests.get(f"{BASE_URL}?latitude={latitude}&longitude={longitude}&{params}")
@@ -47,16 +48,18 @@ async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict
 
         weather_data = list()
         for time, temp, humidity, wind, rain, shower, snow in zip(times, temperatures, humidities, wind_speeds, rains, showers, snows):
-            weather_data.append({
-                "Time": f"{time}",
-                "Timezone": f"{timezone}",
-                "Temp": f"{temp}{units["temperature_2m"]}",
-                "Humidity": f"{humidity}{units["relative_humidity_2m"]}",
-                "Wind": f"{wind} {units["wind_speed_10m"]}",
-                "Rain": f"{rain} {units["rain"]}",
-                "Shower": f"{shower} {units["showers"]}",
-                "Snow": f"{snow} {units["snowfall"]}",
-            })
+            weather_data.append(
+                ForecastBase(
+                    time=f"{time}",
+                    timezone=f"{timezone}",
+                    temp=f"{temp}{units["temperature_2m"]}",
+                    humidity=f"{humidity}{units["relative_humidity_2m"]}",
+                    wind=f"{wind} {units["wind_speed_10m"]}",
+                    rain=f"{rain} {units["rain"]}",
+                    shower=f"{shower} {units["showers"]}",
+                    snow=f"{snow} {units["snowfall"]}",
+                )
+            )
 
         return weather_data
     

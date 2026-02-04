@@ -19,7 +19,6 @@ class CityInDB(City, table=True):
 
 # Forecasts
 class ForecastBase(SQLModel):
-    city_name: str 
     time: str
     timezone: str
     temp: str
@@ -31,6 +30,8 @@ class ForecastBase(SQLModel):
 
 
 class ForecastResponse(ForecastBase):
+    city_name: str 
+    
     class Config:
         from_attributes = True
 
@@ -38,6 +39,7 @@ class ForecastResponse(ForecastBase):
 class Forecast(ForecastBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     city_id: int = Field(default=None, foreign_key="cityindb.id")
+    city_name: str 
 
     city: CityInDB = Relationship(back_populates="forecast_hourly")
 
