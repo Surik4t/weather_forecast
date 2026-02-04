@@ -45,7 +45,8 @@ async def update_hourly_forecast(latitude: float, longitude: float) -> list[dict
         weather_data = list()
         for time, temp, wind, rain, shower, snow in zip(times, temperatures, wind_speeds, rains, showers, snows):
             weather_data.append({
-                "Time": f"{time} {timezone}",
+                "Time": f"{time}",
+                "Timezone": f"{timezone}",
                 "Temp": f"{temp}{units["temperature_2m"]}",
                 "Wind": f"{wind} {units["wind_speed_10m"]}",
                 "Rain": f"{rain} {units["rain"]}",

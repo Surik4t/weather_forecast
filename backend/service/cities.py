@@ -5,7 +5,7 @@ from sqlmodel import select
 from datetime import datetime, timedelta
 
 from backend.database.config import SessionDep
-from backend.database.models import City, CityInDB, Forecast, ForecastQuery
+from backend.database.models import City, CityInDB, Forecast, ForecastQuery, ForecastResponse
 
 from backend.service.open_meteo_api import get_current_weather, update_hourly_forecast
 
@@ -57,6 +57,7 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
                     city_id=city.id,
                     city_name=city.name,
                     time=forecast["Time"],
+                    timezone=forecast["Timezone"],
                     temp=forecast["Temp"],
                     wind=forecast["Wind"],
                     rain=forecast["Rain"],
@@ -67,18 +68,19 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
 
             city.forecast_updated_time = datetime.now().isoformat()
             session.commit()
-
-            return hourly_forecasts
+            return
 
     try:        
         db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
         city = session.exec(db_query).first()
+        
         if city:
             if not city.forecast_updated_time or (
                 datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()
             ): 
-                return await update_forecast(city)
-            return city.forecast_hourly
+                await update_forecast(city)
+
+            forecast_for_ = city.forecast_hourly
 
         raise HTTPException(status_code=404, detail="City not found.")
     
