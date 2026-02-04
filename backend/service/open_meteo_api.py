@@ -1,4 +1,4 @@
-import requests, json, asyncio
+import requests, json
 from backend.database.models import ForecastBase
 
 
