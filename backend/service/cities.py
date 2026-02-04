@@ -1,13 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from sqlmodel import select
 
 from datetime import datetime
 
 from backend.database.config import SessionDep
-from backend.database.models import City, CityInDB
+from backend.database.models import City, CityInDB, Forecast, ForecastQuery
 
-from backend.service.open_meteo_api import get_current_weather, get_hourly_forecast
+from backend.service.open_meteo_api import get_current_weather, update_hourly_forecast
 
 
 cities_router = APIRouter(prefix="/cities", tags=["cities"])
@@ -32,20 +32,24 @@ async def add_city(new_city: City, session: SessionDep):
         latitude=new_city.latitude,
         longitude=new_city.longitude,
         forecast=None,
-        forecast_updated_time=datetime.now().isoformat()
+        forecast_updated_time=datetime(year=2000, month=1, day=1, hour=0, minute=0).isoformat()
     )
     session.add(city_to_create)
     session.commit()
     return
 
 
-@cities_router.post("/{city_name}")
-async def forecast_for_city(city_name, session: SessionDep):
+@cities_router.post("/city_forecast")
+async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
+
     try:        
-        query = select(CityInDB).where(CityInDB.name == city_name.title())
-        city = session.exec(query).first()
-        forecast = await get_hourly_forecast(city.latitude, city.longitude)
-        return forecast
+        db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
+        city = session.exec(db_query).first()
+        if city:
+            hourly_forecast = await update_hourly_forecast(city.latitude, city.longitude)
+            return hourly_forecast
+        raise HTTPException(status_code=404, detail="City not found.")
+    
     except Exception as e:
         raise e
     

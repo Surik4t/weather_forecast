@@ -1,4 +1,5 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
+from typing import List
 
 # Cities
 class Coords(SQLModel):
@@ -12,8 +13,30 @@ class City(Coords):
 
 class CityInDB(City, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    forecast: str | None
+    forecast_hourly: List["Forecast"] = Relationship(back_populates="city")
     forecast_updated_time: str | None
+
+
+class Forecast(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    city_id: int = Field(default=None, foreign_key="cityindb.id")
+    
+    time: str
+    temp: str
+    wind: str
+    rain: str
+    shower: str
+    snow: str
+
+    city: CityInDB = Relationship(back_populates="forecast_hourly")
+
+
+class ForecastQuery(SQLModel):
+    city_name: str
+    time_hours: int = Field(default=12, ge=0, le=24)
+    temp: bool = Field(default=True)
+    wind: bool = Field(default=True)
+    precipitation: bool = Field(default=True)
 
 
 # Users 
