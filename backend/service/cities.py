@@ -99,10 +99,13 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
             del(forecast.snow)
 
 
-    try:        
-        db_query = select(CityInDB).where(CityInDB.name == forecast_query.city_name.title())
-        city = session.exec(db_query).first()
-        
+    try: 
+        user = session.exec(select(User).where(User.id == forecast_query.user_id)).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+
+        city = [c for c in user.cities if c.name == forecast_query.city_name].pop()
+
         if city:
             if not city.forecast_updated_time or (
                 datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()

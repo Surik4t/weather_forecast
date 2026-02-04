@@ -19,7 +19,7 @@ class CityInDB(City, table=True):
     forecast_updated_time: str | None
 
     user_id: uuid.UUID = Field(foreign_key="user.id")
-    
+
     user: "User" = Relationship(back_populates="cities")
 
 
@@ -51,6 +51,7 @@ class Forecast(ForecastBase, table=True):
 
 
 class ForecastQuery(SQLModel):
+    user_id: uuid.UUID = Field(default="User ID")
     city_name: str = Field(default="City Name")
     time_hours: int = Field(default=12, ge=0, le=23)
     temp: bool = Field(default=True)
