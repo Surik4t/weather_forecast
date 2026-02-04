@@ -18,6 +18,10 @@ class CityInDB(City, table=True):
     forecast_hourly: Optional[List["Forecast"]] = Relationship(back_populates="city")
     forecast_updated_time: str | None
 
+    user_id: uuid.UUID = Field(foreign_key="user.id")
+    
+    user: "User" = Relationship(back_populates="cities")
+
 
 # Forecasts
 class ForecastBase(SQLModel):
@@ -63,3 +67,5 @@ class User(SQLModel, table=True):
         index=True
     )
     username: str = Field(index=True, unique=True)
+
+    cities: List["CityInDB"] = Relationship(back_populates="user")

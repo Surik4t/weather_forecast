@@ -24,8 +24,8 @@ cities_router = APIRouter(prefix="/cities", tags=["cities"])
 @cities_router.get("/all/{user_id}")
 async def get_cities_list(user_id: uuid.UUID, session: SessionDep):
     try:
-        query = select(CityInDB).where(CityInDB.user_id == user_id)
-        cities = session.exec(query).all()
+        query = select(User).where(User.id == user_id)
+        cities = session.exec(query).first().cities
         return cities
     
     except Exception as e:
