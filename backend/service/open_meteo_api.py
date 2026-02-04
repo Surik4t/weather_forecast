@@ -16,7 +16,8 @@ async def get_current_weather(latitude: float, longitude: float) -> dict:
         units = data["current_units"]
 
         weather_data = {
-            "Time": f"{current["time"]} {data["timezone"]}",
+            "Timezone": f"{data["timezone"]}",
+            "Time": f"{current["time"]}",
             "Temp": f"{current["temperature_2m"]}{units["temperature_2m"]}",
             "Wind speed": f"{current["wind_speed_10m"]} {units["wind_speed_10m"]}",
             "Pressure": f"{current["surface_pressure"]} {units["surface_pressure"]}",
