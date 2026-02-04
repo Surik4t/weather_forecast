@@ -23,6 +23,7 @@ class ForecastBase(SQLModel):
     time: str
     timezone: str
     temp: str
+    humidity: str
     wind: str
     rain: str
     shower: str
@@ -45,6 +46,7 @@ class ForecastQuery(SQLModel):
     city_name: str
     time_hours: int = Field(default=12, ge=0, le=23)
     temp: bool = Field(default=True)
+    humidity: bool = Field(default=True)
     wind: bool = Field(default=True)
     precipitation: bool = Field(default=True)
 

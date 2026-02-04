@@ -59,6 +59,7 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
                     time=forecast["Time"],
                     timezone=forecast["Timezone"],
                     temp=forecast["Temp"],
+                    humidity=forecast["Humidity"],
                     wind=forecast["Wind"],
                     rain=forecast["Rain"],
                     shower=forecast["Shower"],
@@ -73,6 +74,8 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
     def filter_by_params(forecast: ForecastResponse):
         if not forecast_query.temp:
             del(forecast.temp)
+        if not forecast_query.humidity:
+            del(forecast.humidity)
         if not forecast_query.wind:
             del(forecast.wind)
         if not forecast_query.precipitation:
@@ -87,7 +90,7 @@ async def forecast_for_city(forecast_query: ForecastQuery, session: SessionDep):
         
         if city:
             if not city.forecast_updated_time or (
-                datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=15) < datetime.now()
+                datetime.fromisoformat(city.forecast_updated_time) + timedelta(minutes=1) < datetime.now()
             ): 
                 await update_forecast(city)
 
