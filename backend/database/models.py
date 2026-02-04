@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
+import uuid
 
 # Cities
 class Coords(SQLModel):
@@ -54,25 +55,11 @@ class ForecastQuery(SQLModel):
 
 
 # Users 
-class User(SQLModel):
-    id: int | None = Field(default=None, primary_key=True) 
+class User(SQLModel, table=True):
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True, 
+        index=True
+    )
     username: str = Field(index=True, unique=True)
-    disabled: bool | None = None
-
-
-class NewUser(SQLModel):
-    username: str
-    password: str
-
-
-class UserInDB(User, table=True):
-    hashed_password: str
-
-
-class Token(SQLModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(SQLModel):
-    username: str | None = None
+    disabled: bool = Field(default=False)
