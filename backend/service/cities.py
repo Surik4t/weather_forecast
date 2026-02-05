@@ -35,7 +35,7 @@ async def get_cities_list(user_id: uuid.UUID, session: SessionDep):
         raise e
 
 
-@cities_router.put("/", status_code=201)
+@cities_router.put("/add_city", status_code=201)
 async def add_city(new_city: City, session: SessionDep):
     try:
         user = session.exec(select(User).where(User.id==new_city.user_id)).first()

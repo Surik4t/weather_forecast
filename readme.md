@@ -70,7 +70,7 @@ curl -X GET "http://127.0.0.1:8000/users/all"
 
 * /cities/add_city - Принимает координаты, название города, ID пользователя. Сохраняет город в базе данных с ссылкой на пользователя, 
 ```
-curl -X PUT "http://127.0.0.1:8000/cities/" \
+curl -X PUT "http://127.0.0.1:8000/cities/add_city" \
   -H "accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{
